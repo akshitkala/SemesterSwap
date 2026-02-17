@@ -1,3 +1,4 @@
+
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export interface Book {
@@ -7,7 +8,9 @@ export interface Book {
     price: number;
     condition: 'New' | 'Good' | 'Used';
     images: string[];
-    sellerPhone: string; // Hidden in initial fetch, revealed later if needed
+    sellerPhone: string;
+    sellerId: string;
+    sellerEmail: string; // Added field
     slug: string;
     createdAt: string;
     status?: 'pending' | 'approved' | 'rejected' | 'sold';
@@ -15,7 +18,7 @@ export interface Book {
 
 export async function fetchBooks(): Promise<Book[]> {
     const res = await fetch(`${API_URL}/books`, {
-        cache: 'no-store', // Disable caching for instant updates
+        cache: 'no-store',
     });
 
     if (!res.ok) {
@@ -46,7 +49,7 @@ export async function searchBooks(query: string): Promise<Book[]> {
     });
 
     if (!res.ok) {
-        if (res.status === 404) return []; // Return empty array if no books found
+        if (res.status === 404) return [];
         throw new Error('Failed to search books');
     }
 
@@ -54,8 +57,11 @@ export async function searchBooks(query: string): Promise<Book[]> {
     return json.data;
 }
 
-export async function fetchSellerBooks(phone: string): Promise<Book[]> {
-    const res = await fetch(`${API_URL}/books/user?phone=${encodeURIComponent(phone)}`, {
+export async function fetchSellerBooks(token: string): Promise<Book[]> {
+    const res = await fetch(`${API_URL}/books/user`, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
         cache: 'no-store',
     });
 
@@ -68,13 +74,13 @@ export async function fetchSellerBooks(phone: string): Promise<Book[]> {
     return json.data;
 }
 
-export async function deleteBook(id: string, phone: string): Promise<boolean> {
+export async function deleteBook(id: string, token: string): Promise<boolean> {
     const res = await fetch(`${API_URL}/books/id/${id}`, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ phone }),
     });
 
     if (!res.ok) {
@@ -83,4 +89,22 @@ export async function deleteBook(id: string, phone: string): Promise<boolean> {
     }
 
     return true;
+}
+
+export async function createBook(formData: FormData, token: string): Promise<Book> {
+    const res = await fetch(`${API_URL}/books`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+    });
+
+    const json = await res.json();
+
+    if (!res.ok) {
+        throw new Error(json.message || 'Failed to list book');
+    }
+
+    return json.data;
 }

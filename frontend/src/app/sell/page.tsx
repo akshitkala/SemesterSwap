@@ -1,11 +1,14 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { API_URL } from '@/lib/api';
+import { createBook } from '@/lib/api'; // Updated import
+import { useAuth } from '@/context/AuthContext';
 
 export default function SellPage() {
     const router = useRouter();
+    const { user, loading: authLoading, signInWithGoogle } = useAuth();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -18,6 +21,32 @@ export default function SellPage() {
     });
 
     const [images, setImages] = useState<File[]>([]);
+
+    // Redirect if not logged in
+    useEffect(() => {
+        if (!authLoading && !user) {
+            router.push('/');
+            // Ideally trigger login modal or show message, 
+            // but for now redirecting or showing a "Please login" state is fine.
+        }
+    }, [user, authLoading, router]);
+
+    if (authLoading) return <div className="text-center py-20">Loading...</div>;
+
+    if (!user) {
+        return (
+            <div className="max-w-md mx-auto px-4 py-20 text-center">
+                <h2 className="text-2xl font-bold mb-4">Login Required</h2>
+                <p className="text-gray-600 mb-6">You need to sign in to list a book.</p>
+                <button
+                    onClick={() => signInWithGoogle()}
+                    className="bg-emerald-600 text-white px-6 py-3 rounded-full font-bold hover:bg-emerald-700 transition-colors"
+                >
+                    Sign In with Google
+                </button>
+            </div>
+        );
+    }
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -36,7 +65,10 @@ export default function SellPage() {
         setLoading(true);
         setError('');
 
+        if (!user) return;
+
         try {
+            const token = await user.getIdToken();
             const data = new FormData();
             data.append('bookName', formData.bookName);
             data.append('subject', formData.subject);
@@ -48,16 +80,7 @@ export default function SellPage() {
                 data.append('images', file);
             });
 
-            const res = await fetch(`${API_URL}/books`, {
-                method: 'POST',
-                body: data,
-            });
-
-            const json = await res.json();
-
-            if (!res.ok) {
-                throw new Error(json.message || 'Failed to list book');
-            }
+            await createBook(data, token);
 
             router.push('/'); // Redirecting to home after successful listing
         } catch (err: any) {

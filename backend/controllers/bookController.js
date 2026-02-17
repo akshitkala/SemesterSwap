@@ -2,11 +2,14 @@ const Book = require('../models/Book');
 
 // @desc    Create a new book listing
 // @route   POST /api/books
-// @access  Public (for now, will be protected later)
+// @access  Private
 const createBook = async (req, res, next) => {
   try {
     const { bookName, subject, price, condition, sellerPhone } = req.body;
     
+    // User from auth middleware
+    const { uid: sellerId, email: sellerEmail } = req.user;
+
     // Validate Phone Number (10-15 digits)
     const phoneRegex = /^\d{10,15}$/;
     if (!sellerPhone || !phoneRegex.test(sellerPhone)) {
@@ -32,6 +35,8 @@ const createBook = async (req, res, next) => {
       condition,
       images,
       sellerPhone,
+      sellerId,
+      sellerEmail,
       status: 'approved', // Auto-approve for MVP/dev
     });
 
@@ -122,20 +127,15 @@ const searchBooks = async (req, res, next) => {
     next(error);
   }
 };
-// @desc    Get books by seller phone
-// @route   GET /api/books/user?phone=...
-// @access  Public (Self-Verification)
+// @desc    Get books by seller (My Listings)
+// @route   GET /api/books/user
+// @access  Private
 const getSellerBooks = async (req, res, next) => {
   try {
-    const { phone } = req.query;
-
-    if (!phone) {
-      res.status(400);
-      throw new Error('Please provide a phone number');
-    }
+    const { uid } = req.user;
 
     // Return all statuses (pending/approved) for the seller
-    const books = await Book.find({ sellerPhone: phone }).sort({ createdAt: -1 });
+    const books = await Book.find({ sellerId: uid }).sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -149,11 +149,11 @@ const getSellerBooks = async (req, res, next) => {
 
 // @desc    Delete a book (Verify Phone)
 // @route   DELETE /api/books/:id
-// @access  Public (Self-Verification)
+// @access  Private
 const deleteBook = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { phone } = req.body; // Phone passed in body to confirm ownership
+    const { uid } = req.user;
 
     const book = await Book.findById(id);
 
@@ -162,9 +162,9 @@ const deleteBook = async (req, res, next) => {
       throw new Error('Book not found');
     }
 
-    if (!phone || book.sellerPhone !== phone) {
+    if (book.sellerId !== uid) {
       res.status(401);
-      throw new Error('Unauthorized: Phone number does not match seller');
+      throw new Error('Unauthorized: You do not own this listing');
     }
 
     await book.deleteOne();

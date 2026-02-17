@@ -35,6 +35,15 @@ const bookSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Seller phone number is required'],
   },
+  sellerId: {
+    type: String,
+    required: true,
+    index: true,
+  },
+  sellerEmail: {
+    type: String,
+    required: true,
+  },
   slug: {
     type: String,
     unique: true,

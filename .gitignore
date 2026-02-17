@@ -91,3 +91,8 @@ backend/.env.local
 
 # Documents (Keep if you want to track PRD/TRD, ignore if private)
 # documents/
+
+# Ignore test folders if not needed in repo
+backend/tests/
+backend/__tests__/
+backend/coverage/
