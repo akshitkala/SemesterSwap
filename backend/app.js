@@ -4,15 +4,23 @@ const morgan = require('morgan');
 const { errorHandler } = require('./middleware/errorHandler');
 const { notFound } = require('./middleware/notFound');
 const healthRoutes = require('./routes/healthRoutes');
+const { apiLimiter } = require('./middleware/rateLimit');
 
 const app = express();
 
+// Trust Proxy (Required for Rate Limiting on Render/Vercel)
+app.set('trust proxy', 1);
+
 // Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cors());
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
-app.use(express.json());
-app.use(cors());
+
+// Global Rate Limit
+app.use('/api', apiLimiter);
 
 // Routes
 app.use('/health', healthRoutes);

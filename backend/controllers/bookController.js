@@ -5,10 +5,14 @@ const Book = require('../models/Book');
 // @access  Public (for now, will be protected later)
 const createBook = async (req, res, next) => {
   try {
-    const { bookName, subject, price, condition } = req.body;
+    const { bookName, subject, price, condition, sellerPhone } = req.body;
     
-    // Get verified phone from auth middleware
-    const sellerPhone = req.user.phone_number;
+    // Validate Phone Number (10-15 digits)
+    const phoneRegex = /^\d{10,15}$/;
+    if (!sellerPhone || !phoneRegex.test(sellerPhone)) {
+        res.status(400);
+        throw new Error('Please provide a valid phone number (10-15 digits)');
+    }
 
     // Handle file uploads
     let images = [];
@@ -28,7 +32,7 @@ const createBook = async (req, res, next) => {
       condition,
       images,
       sellerPhone,
-      // status defaults to 'pending'
+      status: 'approved', // Auto-approve for MVP/dev
     });
 
     res.status(201).json({
@@ -114,10 +118,68 @@ const searchBooks = async (req, res, next) => {
     next(error);
   }
 };
+// @desc    Get books by seller phone
+// @route   GET /api/books/user?phone=...
+// @access  Public (Self-Verification)
+const getSellerBooks = async (req, res, next) => {
+  try {
+    const { phone } = req.query;
+
+    if (!phone) {
+      res.status(400);
+      throw new Error('Please provide a phone number');
+    }
+
+    // Return all statuses (pending/approved) for the seller
+    const books = await Book.find({ sellerPhone: phone }).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: books.length,
+      data: books,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delete a book (Verify Phone)
+// @route   DELETE /api/books/:id
+// @access  Public (Self-Verification)
+const deleteBook = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { phone } = req.body; // Phone passed in body to confirm ownership
+
+    const book = await Book.findById(id);
+
+    if (!book) {
+      res.status(404);
+      throw new Error('Book not found');
+    }
+
+    if (!phone || book.sellerPhone !== phone) {
+      res.status(401);
+      throw new Error('Unauthorized: Phone number does not match seller');
+    }
+
+    await book.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      data: {},
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 module.exports = {
   createBook,
   getAllApprovedBooks,
   getBookBySlug,
   searchBooks,
+  getSellerBooks,
+  deleteBook,
 };
