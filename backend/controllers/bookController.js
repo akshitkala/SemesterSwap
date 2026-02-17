@@ -102,10 +102,14 @@ const searchBooks = async (req, res, next) => {
       throw new Error('Please provide a search query');
     }
 
-    // Case-insensitive regex search on bookName
+    // Case-insensitive regex search on bookName OR subject
     // Filter by status: 'approved'
+    const keyword = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape regex special chars
     const books = await Book.find({
-      bookName: { $regex: q, $options: 'i' },
+      $or: [
+        { bookName: { $regex: keyword, $options: 'i' } },
+        { subject: { $regex: keyword, $options: 'i' } },
+      ],
       status: 'approved',
     });
 

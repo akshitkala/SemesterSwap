@@ -15,7 +15,7 @@ export interface Book {
 
 export async function fetchBooks(): Promise<Book[]> {
     const res = await fetch(`${API_URL}/books`, {
-        next: { revalidate: 60 }, // Cache for 60 seconds
+        cache: 'no-store', // Disable caching for instant updates
     });
 
     if (!res.ok) {
@@ -28,7 +28,7 @@ export async function fetchBooks(): Promise<Book[]> {
 
 export async function fetchBookBySlug(slug: string): Promise<Book> {
     const res = await fetch(`${API_URL}/books/${slug}`, {
-        next: { revalidate: 60 }, // Cache for 60 seconds
+        cache: 'no-store',
     });
 
     if (!res.ok) {
@@ -46,6 +46,7 @@ export async function searchBooks(query: string): Promise<Book[]> {
     });
 
     if (!res.ok) {
+        if (res.status === 404) return []; // Return empty array if no books found
         throw new Error('Failed to search books');
     }
 
