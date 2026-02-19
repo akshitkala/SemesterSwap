@@ -4,19 +4,22 @@ import { useEffect, useState } from 'react';
 import { getSuperAdminStats, toggleApprovalMode } from '@/lib/api/superAdmin';
 import toast from 'react-hot-toast';
 import { AdminStats } from '@/lib/superAdmin';
+import UsersTable from '@/components/admin/UsersTable';
+import ListingsTable from '@/components/admin/ListingsTable';
 
 export default function SuperAdminOverview() {
     const [stats, setStats] = useState<AdminStats['listings'] & AdminStats['users'] | any>(null);
     const [approvalMode, setApprovalMode] = useState<'manual' | 'automatic'>('manual');
     const [loading, setLoading] = useState(true);
 
+    // Filter Logic
+    const [activeView, setActiveView] = useState<'users' | 'listings' | null>(null);
+    const [activeFilter, setActiveFilter] = useState<string>('all');
+
     useEffect(() => {
         const fetchStats = async () => {
             try {
                 const data = await getSuperAdminStats();
-                // Map the API response to a flat structure for easier display if needed, 
-                // or just use the nested structure. The previous implementation used a flat structure.
-                // improved mapping based on what I saw in dashboard/page.tsx
                 setStats({
                     totalUsers: data.data.users.total,
                     activeUsers: data.data.users.active,
@@ -44,6 +47,17 @@ export default function SuperAdminOverview() {
         } catch (error) {
             toast.error('Failed to update approval mode');
             console.error(error);
+        }
+    };
+
+    const handleCardClick = (view: 'users' | 'listings', filter: string) => {
+        if (activeView === view && activeFilter === filter) {
+            // Toggle off if clicking same card
+            setActiveView(null);
+            setActiveFilter('all');
+        } else {
+            setActiveView(view);
+            setActiveFilter(filter);
         }
     };
 
@@ -78,57 +92,88 @@ export default function SuperAdminOverview() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <StatCard
                     title="Total Users"
                     value={stats?.totalUsers || 0}
                     icon={<span className="text-2xl">👥</span>}
                     color="bg-blue-50 text-blue-700 border-blue-100"
+                    onClick={() => handleCardClick('users', 'all')}
+                    active={activeView === 'users' && activeFilter === 'all'}
                 />
                 <StatCard
                     title="Active Users"
                     value={stats?.activeUsers || 0}
                     icon={<span className="text-2xl">🟢</span>}
                     color="bg-emerald-50 text-emerald-700 border-emerald-100"
-                />
-                <StatCard
-                    title="Total Listings"
-                    value={stats?.totalListings || 0}
-                    icon={<span className="text-2xl">📚</span>}
-                    color="bg-purple-50 text-purple-700 border-purple-100"
-                />
-                <StatCard
-                    title="Pending"
-                    value={stats?.pendingListings || 0}
-                    icon={<span className="text-2xl">⏳</span>}
-                    color="bg-yellow-50 text-yellow-700 border-yellow-100"
-                />
-                <StatCard
-                    title="Approved"
-                    value={stats?.approvedListings || 0}
-                    icon={<span className="text-2xl">✅</span>}
-                    color="bg-green-50 text-green-700 border-green-100"
-                />
-                <StatCard
-                    title="Rejected"
-                    value={stats?.rejectedListings || 0}
-                    icon={<span className="text-2xl">❌</span>}
-                    color="bg-red-50 text-red-700 border-red-100"
+                    onClick={() => handleCardClick('users', 'active')}
+                    active={activeView === 'users' && activeFilter === 'active'}
                 />
                 <StatCard
                     title="Disabled Users"
                     value={stats?.disabledUsers || 0}
                     icon={<span className="text-2xl">🚫</span>}
                     color="bg-red-50 text-red-700 border-red-100"
+                    onClick={() => handleCardClick('users', 'disabled')}
+                    active={activeView === 'users' && activeFilter === 'disabled'}
+                />
+                <StatCard
+                    title="Total Listings"
+                    value={stats?.totalListings || 0}
+                    icon={<span className="text-2xl">📚</span>}
+                    color="bg-purple-50 text-purple-700 border-purple-100"
+                    onClick={() => handleCardClick('listings', 'all')}
+                    active={activeView === 'listings' && activeFilter === 'all'}
+                />
+                <StatCard
+                    title="Pending"
+                    value={stats?.pendingListings || 0}
+                    icon={<span className="text-2xl">⏳</span>}
+                    color="bg-yellow-50 text-yellow-700 border-yellow-100"
+                    onClick={() => handleCardClick('listings', 'pending')}
+                    active={activeView === 'listings' && activeFilter === 'pending'}
+                />
+                <StatCard
+                    title="Approved"
+                    value={stats?.approvedListings || 0}
+                    icon={<span className="text-2xl">✅</span>}
+                    color="bg-green-50 text-green-700 border-green-100"
+                    onClick={() => handleCardClick('listings', 'approved')}
+                    active={activeView === 'listings' && activeFilter === 'approved'}
+                />
+                <StatCard
+                    title="Rejected"
+                    value={stats?.rejectedListings || 0}
+                    icon={<span className="text-2xl">❌</span>}
+                    color="bg-red-50 text-red-700 border-red-100"
+                    onClick={() => handleCardClick('listings', 'rejected')}
+                    active={activeView === 'listings' && activeFilter === 'rejected'}
                 />
             </div>
+
+            {/* Dynamic Content Area */}
+            {activeView === 'users' && (
+                <div className="animate-fade-in-up">
+                    <UsersTable filter={activeFilter as any} />
+                </div>
+            )}
+
+            {activeView === 'listings' && (
+                <div className="animate-fade-in-up">
+                    <ListingsTable initialFilter={activeFilter} />
+                </div>
+            )}
         </div>
     );
 }
 
-function StatCard({ title, value, icon, color }: { title: string; value: number; icon: React.ReactNode; color: string }) {
+function StatCard({ title, value, icon, color, onClick, active }: { title: string; value: number; icon: React.ReactNode; color: string; onClick?: () => void; active?: boolean }) {
     return (
-        <div className={`rounded-2xl p-6 border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${color}`}>
+        <div
+            onClick={onClick}
+            className={`rounded-2xl p-6 border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer 
+            ${color} ${active ? 'ring-2 ring-offset-2 ring-indigo-500 scale-105 shadow-lg' : ''}`}
+        >
             <div className="flex items-start justify-between">
                 <div>
                     <p className="text-sm font-semibold opacity-80 uppercase tracking-wide">{title}</p>
