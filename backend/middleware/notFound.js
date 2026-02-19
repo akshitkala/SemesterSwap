@@ -1,5 +1,6 @@
 const notFound = (req, res, next) => {
-  const error = new Error(`Not Found - ${req.originalUrl}`);
+  // H3: Generic message — do NOT reflect req.originalUrl (leaks internal routing structure)
+  const error = new Error('The requested resource was not found');
   res.status(404);
   next(error);
 };

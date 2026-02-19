@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Semester Swap V2 — System Workflow</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg:       #0A0E1A;
+    --surface:  #111827;
+    --surface2: #1C2539;
+    --border:   #2A3550;
+    --blue:     #3B82F6;
+    --blue-dim: #1D4ED8;
+    --cyan:     #22D3EE;
+    --green:    #10B981;
+    --amber:    #F59E0B;
+    --red:      #EF4444;
+    --purple:   #8B5CF6;
+    --text:     #E2E8F0;
+    --muted:    #64748B;
+    --mono:     'Space Mono', monospace;
+    --sans:     'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Grid background ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  /* ── Header ── */
+  header { text-align: center; margin-bottom: 64px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: .15em;
+    color: var(--cyan); background: rgba(34,211,238,.08);
+    border: 1px solid rgba(34,211,238,.25); border-radius: 4px;
+    padding: 5px 14px; margin-bottom: 20px; text-transform: uppercase;
+  }
+  .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.3} }
+
+  h1 {
+    font-family: var(--mono); font-size: clamp(28px, 4vw, 48px);
+    font-weight: 700; letter-spacing: -.02em;
+    background: linear-gradient(135deg, #fff 0%, var(--cyan) 60%, var(--blue) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 12px;
+  }
+  .sub { color: var(--muted); font-size: 15px; font-weight: 400; }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 16px; justify-content: center;
+    margin-bottom: 56px;
+  }
+  .leg {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--muted); font-family: var(--mono);
+  }
+  .leg-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 4px; margin-bottom: 40px; background: var(--surface); border-radius: 10px; padding: 4px; width: fit-content; margin-left: auto; margin-right: auto; }
+  .tab {
+    font-family: var(--mono); font-size: 12px; padding: 8px 20px;
+    border-radius: 7px; cursor: pointer; border: none;
+    background: transparent; color: var(--muted);
+    transition: all .2s; letter-spacing: .05em;
+  }
+  .tab.active { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  /* ── Flow sections ── */
+  .flow-section { display: none; }
+  .flow-section.visible { display: block; }
+
+  /* ── Section label ── */
+  .section-title {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .15em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 24px; display: flex; align-items: center; gap: 12px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ── Swimlane ── */
+  .swimlane {
+    display: grid;
+    gap: 0;
+    margin-bottom: 40px;
+  }
+  .lane {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    min-height: 100px;
+  }
+  .lane-label {
+    display: flex; align-items: flex-start; padding-top: 20px; padding-right: 20px;
+    font-family: var(--mono); font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted);
+    border-right: 1px solid var(--border);
+    position: relative;
+  }
+  .lane-label::after {
+    content: ''; position: absolute; right: -5px; top: 24px;
+    width: 8px; height: 8px; border-radius: 50%;
+    border: 2px solid var(--border); background: var(--bg);
+  }
+  .lane-body {
+    padding: 16px 0 16px 28px;
+    display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px;
+  }
+
+  /* ── Nodes ── */
+  .node {
+    position: relative;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px; font-weight: 500;
+    border: 1px solid;
+    min-width: 130px;
+    cursor: default;
+    transition: transform .15s, box-shadow .15s;
+    line-height: 1.4;
+  }
+  .node:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+
+  .node-action { background: rgba(59,130,246,.1); border-color: rgba(59,130,246,.4); color: #93C5FD; }
+  .node-decision { background: rgba(245,158,11,.08); border-color: rgba(245,158,11,.35); color: #FCD34D; }
+  .node-system { background: rgba(139,92,246,.08); border-color: rgba(139,92,246,.35); color: #C4B5FD; }
+  .node-storage { background: rgba(16,185,129,.08); border-color: rgba(16,185,129,.35); color: #6EE7B7; }
+  .node-output { background: rgba(34,211,238,.08); border-color: rgba(34,211,238,.35); color: #67E8F9; }
+  .node-danger { background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.35); color: #FCA5A5; }
+  .node-neutral { background: rgba(100,116,139,.1); border-color: rgba(100,116,139,.4); color: #CBD5E1; }
+
+  .node-tag {
+    font-family: var(--mono); font-size: 9px; letter-spacing: .08em;
+    display: block; margin-bottom: 4px; opacity: .7; text-transform: uppercase;
+  }
+  .node-title { font-weight: 600; font-size: 13px; }
+  .node-sub { font-size: 11px; opacity: .7; margin-top: 2px; }
+
+  /* ── Arrow ── */
+  .arrow {
+    display: flex; align-items: center; color: var(--muted);
+    font-size: 18px; align-self: center; flex-shrink: 0; padding: 0 4px;
+  }
+  .arrow-label {
+    font-family: var(--mono); font-size: 9px; color: var(--muted);
+    text-align: center; white-space: nowrap;
+  }
+  .arrow-wrap { display: flex; flex-direction: column; align-items: center; align-self: center; gap: 2px; }
+
+  /* ── Decision diamond ── */
+  .diamond-wrap { display: flex; flex-direction: column; align-items: center; }
+  .diamond {
+    width: 80px; height: 80px;
+    background: rgba(245,158,11,.08);
+    border: 1px solid rgba(245,158,11,.35);
+    transform: rotate(45deg);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .diamond-inner {
+    transform: rotate(-45deg);
+    font-family: var(--mono); font-size: 9px; color: #FCD34D;
+    text-align: center; line-height: 1.3; padding: 4px;
+  }
+  .diamond-labels { display: flex; gap: 60px; margin-top: 4px; }
+  .diamond-label { font-family: var(--mono); font-size: 9px; color: var(--muted); }
+
+  /* ── Vertical flow ── */
+  .vflow { display: flex; flex-direction: column; gap: 0; align-items: flex-start; }
+  .vflow-step {
+    display: flex; gap: 16px; align-items: flex-start;
+    padding: 0 0 0 0;
+  }
+  .vline-wrap { display: flex; flex-direction: column; align-items: center; width: 24px; flex-shrink: 0; }
+  .vstep-num {
+    width: 24px; height: 24px; border-radius: 50%;
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .vline { width: 1px; flex: 1; min-height: 20px; }
+  .vstep-content { padding-bottom: 28px; flex: 1; }
+  .vstep-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .vstep-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .vstep-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip {
+    font-family: var(--mono); font-size: 10px;
+    padding: 3px 8px; border-radius: 4px; border: 1px solid;
+  }
+
+  /* ── Two-col branches ── */
+  .branches { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; }
+  .branch {
+    border-radius: 8px; padding: 14px 16px;
+    border: 1px solid;
+  }
+  .branch-title { font-size: 12px; font-weight: 700; margin-bottom: 6px; font-family: var(--mono); letter-spacing: .05em; }
+  .branch-item { font-size: 12px; color: var(--muted); padding: 3px 0; padding-left: 12px; position: relative; }
+  .branch-item::before { content: '›'; position: absolute; left: 0; }
+
+  /* ── Security box ── */
+  .sec-box {
+    border-radius: 10px; padding: 20px 24px;
+    background: rgba(239,68,68,.05); border: 1px solid rgba(239,68,68,.2);
+    margin-top: 16px;
+  }
+  .sec-box-title { font-family: var(--mono); font-size: 11px; color: #FCA5A5; letter-spacing: .1em; margin-bottom: 12px; text-transform: uppercase; }
+  .sec-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 8px; }
+  .sec-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .sec-text { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .sec-text strong { color: var(--text); }
+
+  /* ── Model cards ── */
+  .model-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .model-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .model-header { padding: 14px 18px; font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .08em; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .model-body { padding: 12px 18px; }
+  .field-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(42,53,80,.5); font-size: 12px; }
+  .field-row:last-child { border-bottom: none; }
+  .field-name { font-family: var(--mono); color: var(--cyan); font-size: 11px; }
+  .field-type { color: var(--muted); font-size: 11px; }
+  .field-note { width: 100%; color: var(--muted); font-size: 10px; padding-top: 2px; font-style: italic; }
+
+  /* ── API table ── */
+  .api-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 24px; }
+  .api-table th { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 8px 12px; border-bottom: 1px solid var(--border); text-align: left; }
+  .api-table td { padding: 10px 12px; border-bottom: 1px solid rgba(42,53,80,.5); vertical-align: middle; }
+  .api-table tr:last-child td { border-bottom: none; }
+  .api-table tr:hover td { background: rgba(255,255,255,.02); }
+  .method { font-family: var(--mono); font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
+  .m-get    { background: rgba(16,185,129,.15); color: #6EE7B7; }
+  .m-post   { background: rgba(59,130,246,.15); color: #93C5FD; }
+  .m-put    { background: rgba(245,158,11,.15); color: #FCD34D; }
+  .m-delete { background: rgba(239,68,68,.15); color: #FCA5A5; }
+  .ep { font-family: var(--mono); font-size: 11px; color: var(--text); }
+  .role-badge { font-family: var(--mono); font-size: 9px; padding: 2px 7px; border-radius: 3px; border: 1px solid; }
+  .r-pub  { color: var(--muted); border-color: var(--border); }
+  .r-user { color: #93C5FD; border-color: rgba(59,130,246,.4); }
+  .r-admin{ color: #C4B5FD; border-color: rgba(139,92,246,.4); }
+  .r-super{ color: #FCD34D; border-color: rgba(245,158,11,.4); }
+  .r-own  { color: #6EE7B7; border-color: rgba(16,185,129,.4); }
+
+  /* ── Phase timeline ── */
+  .timeline { position: relative; padding-left: 32px; }
+  .timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 1px; background: var(--border); }
+  .tl-item { position: relative; margin-bottom: 28px; }
+  .tl-dot { position: absolute; left: -27px; top: 4px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid; background: var(--bg); }
+  .tl-phase { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: .1em; margin-bottom: 4px; }
+  .tl-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .tl-items { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tl-chip { font-size: 11px; padding: 3px 10px; border-radius: 4px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); }
+
+  /* ── Middleware stack ── */
+  .mw-stack { display: flex; flex-direction: column; gap: 0; max-width: 480px; }
+  .mw-item { padding: 14px 20px; border-left: 3px solid; position: relative; }
+  .mw-item::after { content: '▼'; position: absolute; bottom: -12px; left: 16px; font-size: 10px; color: var(--muted); z-index: 1; }
+  .mw-item:last-child::after { display: none; }
+  .mw-num { font-family: var(--mono); font-size: 9px; color: var(--muted); margin-bottom: 2px; }
+  .mw-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .mw-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .mw-err { font-family: var(--mono); font-size: 10px; margin-top: 6px; padding: 3px 8px; border-radius: 3px; display: inline-block; }
+
+  @media(max-width:640px) {
+    .lane { grid-template-columns: 80px 1fr; }
+    .branches { grid-template-columns: 1fr; }
+    .model-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <header>
+    <div class="badge">System Workflow</div>
+    <h1>Semester Swap V2</h1>
+    <p class="sub">End-to-end data flow, role permissions, API surface &amp; deployment phases</p>
+  </header>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="leg"><div class="leg-dot" style="background:rgba(59,130,246,.6)"></div>User Action</div>
+    <div class="leg"><div class="leg-dot" style="background:rgba(245,158,11,.6)"></div>Decision / Check</div>
+    <div class="leg"><div class="leg-dot" style="background:rgba(139,92,246,.6)"></div>System / Middleware</div>
+    <div class="leg"><div class="leg-dot" style="background:rgba(16,185,129,.6)"></div>Storage / DB</div>
+    <div class="leg"><div class="leg-dot" style="background:rgba(34,211,238,.6)"></div>External Service</div>
+    <div class="leg"><div class="leg-dot" style="background:rgba(239,68,68,.6)"></div>Error / Block</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('auth')">Auth Flow</button>
+    <button class="tab" onclick="showTab('listing')">Listing Lifecycle</button>
+    <button class="tab" onclick="showTab('roles')">Role Permissions</button>
+    <button class="tab" onclick="showTab('middleware')">Middleware Stack</button>
+    <button class="tab" onclick="showTab('api')">API Surface</button>
+    <button class="tab" onclick="showTab('models')">Data Models</button>
+    <button class="tab" onclick="showTab('phases')">Build Phases</button>
+  </div>
+
+  <!-- ══ TAB: AUTH FLOW ══════════════════════════════════════════════════ -->
+  <div class="flow-section visible" id="tab-auth">
+
+    <p class="section-title">Authentication &amp; Session Flow</p>
+
+    <div class="vflow">
+
+      <div class="vflow-step">
+        <div class="vline-wrap">
+          <div class="vstep-num" style="background:rgba(34,211,238,.15);color:var(--cyan);border:1px solid rgba(34,211,238,.4)">1</div>
+          <div class="vline" style="background:var(--border)"></div>
+        </div>
+        <div class="vstep-content">
+          <div class="vstep-title" style="color:var(--cyan)">User clicks "Sign in with Google"</div>
+          <div class="vstep-desc">Browser opens Firebase Google OAuth popup. User selects their Google account.</div>
+          <div class="vstep-chips">
+            <span class="chip" style="color:var(--cyan);border-color:rgba(34,211,238,.3)">Frontend — Next.js</span>
+            <span class="chip" style="color:var(--muted);border-color:var(--border)">Firebase Auth SDK</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="vflow-step">
+        <div class="vline-wrap">
+          <div class="vstep-num" style="background:rgba(34,211,238,.15);color:var(--cyan);border:1px solid rgba(34,211,238,.4)">2</div>
+          <div class="vline" style="background:var(--border)"></div>
+        </div>
+        <div class="vstep-content">
+          <div class="vstep-title" style="color:var(--cyan)">Firebase returns Google ID Token</div>
+          <div class="vstep-desc">Firebase verifies Google credentials and issues a signed ID Token (JWT) containing uid, email, displayName. Valid for 1 hour.</div>
+          <div class="vstep-chips">
+            <span class="chip" style="color:var(--cyan);border-color:rgba(34,211,238,.3)">Firebase Auth — Google</span>
+            <span class="chip" style="color:var(--muted);border-color:var(--border)">ID Token (JWT)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="vflow-step">
+        <div class="vline-wrap">
+          <div class="vstep-num" style="background:rgba(59,130,246,.15);color:var(--blue);border:1px solid rgba(59,130,246,.4)">3</div>
+          <div class="vline" style="background:var(--border)"></div>
+        </div>
+        <div class="vstep-content">
+          <div class="vstep-title" style="color:#93C5FD">Frontend sends POST /api/auth/login</div>
+          <div class="vstep-desc">Frontend forwards the Firebase ID Token in the Authorization: Bearer header to the Express backend.</div>
+        </div>
+      </div>
+
+      <div class="vflow-step">
+        <div class="vline-wrap">
+          <div class="vstep-num" style="background:rgba(139,92,246,.15);color:var(--purple);border:1px solid rgba(139,92,246,.4)">4</div>
+          <div class="vline" style="background:var(--border)"></div>
+        </div>
+        <div class="vstep-content">
+          <div class="vstep-title" style="color:#C4B5FD">Auth Middleware — Firebase Admin SDK verification</div>
+          <div class="vstep-desc">Backend calls Firebase Admin SDK verifyIdToken(token). Decodes uid, email, displayName from the claims.</div>
+          <div class="branches" style="margin-top:12px">
+            <div class="branch" style="border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.05)">
+              <div class="branch-title" style="color:#FCA5A5">❌ Invalid / Expired Token</div>
+              <div class="branch-item">Returns 401 Unauthorized</div>
+              <div class="branch-item">Request rejected immediately</div>
+            </div>
+            <div class="branch" style="border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.05)">
+              <div class="branch-title" style="color:#6EE7B7">✓ Valid Token</div>
+              <div class="branch-item">Proceeds to DB lookup</div>
+              <div class="branch-item">uid, email attached to request</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="vflow-step">
+        <div class="vline-wrap">
+          <div class="vstep-num" style="background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.4)">5</div>
+          <div class="vline" style="background:var(--border)"></div>
+        </div>
+        <div class="vstep-content">
+          <div class="vstep-title" style="color:#6EE7B7">MongoDB — User lookup by firebaseUid</div>
+          <div class="vstep-desc">Backend queries Users collection for a document matching the decoded firebaseUid.</div>
+          <div class="branches" style="margin-top:12px">
+            <div class="branch" style="border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.05)">
+              <div class="branch-title" style="color:#93C5FD">🆕 First Login</div>
+              <div class="branch-item">Auto-create User document</div>
+              <div class="branch-item">role: 'user', isActive: true</div>
+              <div class="branch-item">Store email + displayName</div>
+            </div>
+            <div class="branch" style="border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.05)">
+              <div class="branch-title" style="color:#6EE7B7">↩ Returning User</div>
+              <div class="branch-item">Fetch existing document</div>
+              <div class="branch-item">Read role + isActive</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="vflow-step">
+        <div class="vline-wrap">
+          <div class="vstep-num" style="background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.4)">6</div>
+          <div class="vline" style="background:var(--border)"></div>
+        </div>
+        <div class="vstep-content">
+          <div class="vstep-title" style="color:#FCD34D">isActive check — Ban gate</div>
+          <div class="vstep-desc">Auth Middleware reads isActive from the fetched User document.</div>
+          <div class="branches" style="margin-top:12px">
+            <div class="branch" style="border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.05)">
+              <div class="branch-title" style="color:#FCA5A5">🚫 isActive: false (Banned)</div>
+              <div class="branch-item">Returns 403 Forbidden</div>
+              <div class="branch-item">Blocked even with valid token</div>
+            </div>
+            <div class="branch" style="border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.05)">
+              <div class="branch-title" style="color:#6EE7B7">✓ isActive: true</div>
+              <div class="branch-item">req.user = full User document</div>
+              <div class="branch-item">Proceeds to Role Middleware</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="vflow-step">
+        <div class="vline-wrap">
+          <div class="vstep-num" style="background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.4)">7</div>
+        </div>
+        <div class="vstep-content">
+          <div class="vstep-title" style="color:#6EE7B7">Session established — User object returned</div>
+          <div class="vstep-desc">Backend returns the user document (excluding firebaseUid). Frontend stores session state. Role determines which UI routes and API calls are accessible.</div>
+          <div class="vstep-chips">
+            <span class="chip" style="color:#6EE7B7;border-color:rgba(16,185,129,.3)">_id · email · displayName · role · isActive</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="sec-box">
+      <div class="sec-box-title">🔐 Security Notes</div>
+      <div class="sec-row"><div class="sec-icon">⚡</div><div class="sec-text"><strong>firebaseUid is never returned</strong> in any API response — internal identifier only.</div></div>
+      <div class="sec-row"><div class="sec-icon">⚡</div><div class="sec-text">Token expiry is handled by Firebase (1 hour). Frontend must refresh the token silently before it expires.</div></div>
+      <div class="sec-row"><div class="sec-icon">⚡</div><div class="sec-text"><strong>Every protected request</strong> runs steps 4–6 in Auth Middleware — not just login. A ban takes effect within milliseconds.</div></div>
+    </div>
+  </div>
+
+  <!-- ══ TAB: LISTING LIFECYCLE ══════════════════════════════════════════ -->
+  <div class="flow-section" id="tab-listing">
+
+    <p class="section-title">Book Listing — Full Lifecycle</p>
+
+    <div class="swimlane">
+
+      <div class="lane">
+        <div class="lane-label" style="color:#93C5FD">User</div>
+        <div class="lane-body">
+          <div class="node node-action">
+            <span class="node-tag">Step 1</span>
+            <span class="node-title">Fill Listing Form</span>
+            <span class="node-sub">bookName, subject, condition, price, 1–3 images</span>
+          </div>
+          <div class="arrow">→</div>
+          <div class="node node-action">
+            <span class="node-tag">Step 2</span>
+            <span class="node-title">Submit POST /api/books</span>
+            <span class="node-sub">With Firebase token in header</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="lane">
+        <div class="lane-label" style="color:#C4B5FD">Middleware</div>
+        <div class="lane-body">
+          <div class="node node-system">
+            <span class="node-tag">Auth</span>
+            <span class="node-title">Verify Token</span>
+            <span class="node-sub">→ 401 if invalid</span>
+          </div>
+          <div class="arrow">→</div>
+          <div class="node node-system">
+            <span class="node-tag">Role</span>
+            <span class="node-title">Check role: user+</span>
+            <span class="node-sub">→ 403 if not auth</span>
+          </div>
+          <div class="arrow">→</div>
+          <div class="node node-decision">
+            <span class="node-tag">Approval Mode</span>
+            <span class="node-title">Read SystemConfig</span>
+            <span class="node-sub">manual or automatic?</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="lane">
+        <div class="lane-label" style="color:#6EE7B7">Storage</div>
+        <div class="lane-body">
+          <div class="node node-output">
+            <span class="node-tag">Cloudinary</span>
+            <span class="node-title">Upload Images</span>
+            <span class="node-sub">Returns 1–3 URLs</span>
+          </div>
+          <div class="arrow">→</div>
+          <div class="node node-storage">
+            <span class="node-tag">MongoDB</span>
+            <span class="node-title">Save Listing</span>
+            <span class="node-sub">status: pending OR approved</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="lane">
+        <div class="lane-label" style="color:#FCD34D">Admin</div>
+        <div class="lane-body">
+          <div class="node node-decision">
+            <span class="node-tag">If Manual Mode</span>
+            <span class="node-title">Pending Queue</span>
+            <span class="node-sub">Admin reviews listing</span>
+          </div>
+          <div class="arrow">→</div>
+          <div class="node node-action" style="background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.35);color:#6EE7B7">
+            <span class="node-tag">Approve</span>
+            <span class="node-title">status: approved</span>
+            <span class="node-sub">Logged to AdminActivity</span>
+          </div>
+          <div class="arrow" style="color:var(--muted)">or</div>
+          <div class="node node-danger">
+            <span class="node-tag">Reject</span>
+            <span class="node-title">status: rejected</span>
+            <span class="node-sub">Logged to AdminActivity</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="lane">
+        <div class="lane-label" style="color:#67E8F9">Public</div>
+        <div class="lane-body">
+          <div class="node node-output">
+            <span class="node-tag">Visible to all</span>
+            <span class="node-title">Appears in Search</span>
+            <span class="node-sub">GET /api/books + /search</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <p class="section-title" style="margin-top:32px">Edit &amp; Delete Rules</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="branch" style="border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.05)">
+        <div class="branch-title" style="color:#FCD34D">✏ Edit Own Listing</div>
+        <div class="branch-item">User can edit any field</div>
+        <div class="branch-item">If status was 'approved' → resets to 'pending'</div>
+        <div class="branch-item">Listing disappears from public view until re-approved</div>
+        <div class="branch-item">Goes back into Admin pending queue</div>
+      </div>
+      <div class="branch" style="border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.05)">
+        <div class="branch-title" style="color:#FCA5A5">🗑 Soft Delete Own Listing</div>
+        <div class="branch-item">Sets isDeleted: true</div>
+        <div class="branch-item">Hidden from all public queries immediately</div>
+        <div class="branch-item">Data retained in DB for audit purposes</div>
+        <div class="branch-item">Admin can still see it in raw queries</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+      <div class="branch" style="border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.05)">
+        <div class="branch-title" style="color:#93C5FD">⚡ Automatic Mode</div>
+        <div class="branch-item">New listing → status: approved instantly</div>
+        <div class="branch-item">Skips Admin queue entirely</div>
+        <div class="branch-item">AdminActivity logged: AUTO_APPROVE_LISTING</div>
+        <div class="branch-item">actor: null, actorType: 'system'</div>
+      </div>
+      <div class="branch" style="border-color:rgba(139,92,246,.3);background:rgba(139,92,246,.05)">
+        <div class="branch-title" style="color:#C4B5FD">🔒 Manual Mode (default)</div>
+        <div class="branch-item">New listing → status: pending</div>
+        <div class="branch-item">Requires Admin approve/reject</div>
+        <div class="branch-item">Switching mode does NOT affect existing listings</div>
+        <div class="branch-item">Only new listings created after toggle are affected</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB: ROLE PERMISSIONS ══════════════════════════════════════════ -->
+  <div class="flow-section" id="tab-roles">
+
+    <p class="section-title">Three-Tier Role System</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px">
+
+      <!-- User -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+        <div style="padding:18px 20px;background:rgba(59,130,246,.08);border-bottom:1px solid var(--border)">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.1em;margin-bottom:4px">ROLE 01</div>
+          <div style="font-size:20px;font-weight:700;color:#93C5FD">Standard User</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">Default role on first login</div>
+        </div>
+        <div style="padding:16px 20px">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:10px;letter-spacing:.08em">PERMISSIONS</div>
+          ${[
+            ['Browse','All approved listings — public, no login needed'],
+            ['Search','Filter by condition, price, subject'],
+            ['Create Listing','POST /api/books with images'],
+            ['Edit Own Listing','Resets status to pending'],
+            ['Delete Own','Soft delete — isDeleted: true'],
+            ['View Own Status','See Pending/Approved/Rejected'],
+          ].map(([t,d])=>`
+          <div style="padding:8px 0;border-bottom:1px solid rgba(42,53,80,.5)">
+            <div style="font-size:13px;font-weight:500;color:var(--text)">${t}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">${d}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- Admin -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+        <div style="padding:18px 20px;background:rgba(139,92,246,.08);border-bottom:1px solid var(--border)">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.1em;margin-bottom:4px">ROLE 02</div>
+          <div style="font-size:20px;font-weight:700;color:#C4B5FD">Admin</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">Appointed by Super Admin · All User permissions +</div>
+        </div>
+        <div style="padding:16px 20px">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:10px;letter-spacing:.08em">ADDITIONAL PERMISSIONS</div>
+          ${[
+            ['Pending Queue','Review all listings awaiting moderation'],
+            ['Approve Listing','status → approved, logged'],
+            ['Reject Listing','status → rejected, logged'],
+            ['Delete Any Listing','Hard remove, logged to audit trail'],
+            ['Platform Stats','Users, listings, pending, approved counts'],
+            ['View Any User','Read-only profile — no firebaseUid'],
+          ].map(([t,d])=>`
+          <div style="padding:8px 0;border-bottom:1px solid rgba(42,53,80,.5)">
+            <div style="font-size:13px;font-weight:500;color:var(--text)">${t}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">${d}</div>
+          </div>`).join('')}
+          <div style="margin-top:12px;padding:10px 12px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:6px;font-size:11px;color:#FCA5A5">
+            ✗ Cannot promote, demote, or ban users
+          </div>
+        </div>
+      </div>
+
+      <!-- Super Admin -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+        <div style="padding:18px 20px;background:rgba(245,158,11,.08);border-bottom:1px solid var(--border)">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.1em;margin-bottom:4px">ROLE 03</div>
+          <div style="font-size:20px;font-weight:700;color:#FCD34D">Super Admin</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">Platform owner · All Admin permissions +</div>
+        </div>
+        <div style="padding:16px 20px">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:10px;letter-spacing:.08em">GOVERNANCE PERMISSIONS</div>
+          ${[
+            ['Promote User','User → Admin role, logged'],
+            ['Demote Admin','Admin → User role, logged'],
+            ['Ban / Unban','isActive toggle + Firebase token revocation'],
+            ['Approval Mode Toggle','Manual ↔ Automatic, logged with old+new value'],
+            ['Audit Log Viewer','Filter by action, actor, date range'],
+            ['Advanced Stats','Role breakdown, bans, auto vs manual counts'],
+          ].map(([t,d])=>`
+          <div style="padding:8px 0;border-bottom:1px solid rgba(42,53,80,.5)">
+            <div style="font-size:13px;font-weight:500;color:var(--text)">${t}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">${d}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Hierarchy diagram -->
+    <div style="margin-top:32px;text-align:center">
+      <p class="section-title">Role Hierarchy</p>
+      <div style="display:flex;justify-content:center;align-items:center;gap:0;flex-wrap:wrap">
+        <div style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.4);border-radius:8px;padding:12px 24px;text-align:center">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">ROLE: USER</div>
+          <div style="color:#93C5FD;font-weight:600;margin-top:4px">Standard User</div>
+        </div>
+        <div style="padding:0 16px;color:var(--muted);font-size:20px">⊂</div>
+        <div style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.4);border-radius:8px;padding:12px 24px;text-align:center">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">ROLE: ADMIN</div>
+          <div style="color:#C4B5FD;font-weight:600;margin-top:4px">Admin</div>
+        </div>
+        <div style="padding:0 16px;color:var(--muted);font-size:20px">⊂</div>
+        <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.4);border-radius:8px;padding:12px 24px;text-align:center">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">ROLE: SUPER_ADMIN</div>
+          <div style="color:#FCD34D;font-weight:600;margin-top:4px">Super Admin</div>
+        </div>
+      </div>
+      <div style="color:var(--muted);font-size:12px;margin-top:12px">Each role inherits all permissions of the role(s) below it</div>
+    </div>
+  </div>
+
+  <!-- ══ TAB: MIDDLEWARE ════════════════════════════════════════════════ -->
+  <div class="flow-section" id="tab-middleware">
+
+    <p class="section-title">Request Middleware Stack — Every Protected Route</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start">
+
+      <div>
+        <div class="mw-stack">
+          <div class="mw-item" style="border-color:var(--cyan);background:rgba(34,211,238,.04)">
+            <div class="mw-num">MIDDLEWARE 01</div>
+            <div class="mw-title" style="color:var(--cyan)">Auth Middleware</div>
+            <div class="mw-desc">Extracts Bearer token → verifies with Firebase Admin SDK → decodes uid → fetches User from MongoDB → checks isActive</div>
+            <div class="mw-err" style="background:rgba(239,68,68,.1);color:#FCA5A5;border:1px solid rgba(239,68,68,.3)">401 — missing/invalid token</div>
+            <div class="mw-err" style="background:rgba(239,68,68,.1);color:#FCA5A5;border:1px solid rgba(239,68,68,.3);margin-left:8px">403 — isActive: false (banned)</div>
+          </div>
+
+          <div class="mw-item" style="border-color:var(--purple);background:rgba(139,92,246,.04)">
+            <div class="mw-num">MIDDLEWARE 02</div>
+            <div class="mw-title" style="color:#C4B5FD">Role Middleware</div>
+            <div class="mw-desc">Reads req.user.role → checks against required role for the route → enforces hierarchy user &lt; admin &lt; super_admin</div>
+            <div class="mw-err" style="background:rgba(239,68,68,.1);color:#FCA5A5;border:1px solid rgba(239,68,68,.3)">403 — insufficient role</div>
+          </div>
+
+          <div class="mw-item" style="border-color:var(--amber);background:rgba(245,158,11,.04)">
+            <div class="mw-num">MIDDLEWARE 03 — POST /api/books only</div>
+            <div class="mw-title" style="color:#FCD34D">Approval Mode Middleware</div>
+            <div class="mw-desc">Reads SystemConfig.approvalMode from DB → if 'automatic': sets status to 'approved' + logs AUTO_APPROVE_LISTING with actorType:'system', actor:null → if 'manual': sets status to 'pending'</div>
+          </div>
+
+          <div class="mw-item" style="border-color:var(--green);background:rgba(16,185,129,.04)">
+            <div class="mw-num">ROUTE HANDLER</div>
+            <div class="mw-title" style="color:#6EE7B7">Business Logic</div>
+            <div class="mw-desc">Validated request reaches the actual route handler. Input validated with Joi/Zod before DB operations.</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="section-title">Ban Enforcement — Two Layers</p>
+        <div class="vflow">
+          <div class="vflow-step">
+            <div class="vline-wrap">
+              <div class="vstep-num" style="background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.4)">1</div>
+              <div class="vline" style="background:var(--border)"></div>
+            </div>
+            <div class="vstep-content">
+              <div class="vstep-title" style="color:#FCD34D">Super Admin triggers ban</div>
+              <div class="vstep-desc">PUT /api/super-admin/users/:id/toggle-status — sets isActive: false in MongoDB.</div>
+            </div>
+          </div>
+          <div class="vflow-step">
+            <div class="vline-wrap">
+              <div class="vstep-num" style="background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.4)">2</div>
+              <div class="vline" style="background:var(--border)"></div>
+            </div>
+            <div class="vstep-content">
+              <div class="vstep-title" style="color:#FCA5A5">Layer 1 — Firebase token revocation</div>
+              <div class="vstep-desc">Backend immediately calls Firebase Admin SDK revokeRefreshTokens(firebaseUid). The user's existing token is invalid at the Firebase level.</div>
+            </div>
+          </div>
+          <div class="vflow-step">
+            <div class="vline-wrap">
+              <div class="vstep-num" style="background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.4)">3</div>
+            </div>
+            <div class="vstep-content">
+              <div class="vstep-title" style="color:#FCA5A5">Layer 2 — isActive check on every request</div>
+              <div class="vstep-desc">Auth Middleware checks isActive on every request. Returns 403 even if the user somehow presents a token before Firebase propagates. Zero gap window.</div>
+            </div>
+          </div>
+        </div>
+
+        <p class="section-title" style="margin-top:24px">Input Validation</p>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 18px">
+          ${[
+            ['POST /api/books','bookName required, price positive number, condition enum, max 3 images'],
+            ['PUT /api/books/:id','Same schema as create, partial updates allowed'],
+            ['POST /api/auth/login','Firebase token must be a non-empty string'],
+            ['PUT approval-mode','Value must be "manual" or "automatic"'],
+          ].map(([ep,rule])=>`
+          <div style="padding:8px 0;border-bottom:1px solid rgba(42,53,80,.4);font-size:12px">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--cyan)">${ep}</div>
+            <div style="color:var(--muted);margin-top:3px">${rule}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ TAB: API SURFACE ════════════════════════════════════════════════ -->
+  <div class="flow-section" id="tab-api">
+
+    <p class="section-title">Complete API Surface</p>
+
+    <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:.08em">AUTH</div>
+    <table class="api-table">
+      <tr><th>Method</th><th>Endpoint</th><th>Access</th><th>Description</th></tr>
+      <tr><td><span class="method m-post">POST</span></td><td class="ep">/api/auth/login</td><td><span class="role-badge r-pub">Public</span></td><td>Verify Firebase ID token → create/fetch user → return user object</td></tr>
+      <tr><td><span class="method m-get">GET</span></td><td class="ep">/api/auth/me</td><td><span class="role-badge r-user">User+</span></td><td>Return current authenticated user's profile</td></tr>
+    </table>
+
+    <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:.08em">BOOKS</div>
+    <table class="api-table">
+      <tr><th>Method</th><th>Endpoint</th><th>Access</th><th>Description</th></tr>
+      <tr><td><span class="method m-get">GET</span></td><td class="ep">/api/books</td><td><span class="role-badge r-pub">Public</span></td><td>All approved, non-deleted listings</td></tr>
+      <tr><td><span class="method m-get">GET</span></td><td class="ep">/api/books/search?q=&condition=&minPrice=&maxPrice=&subject=&sort=</td><td><span class="role-badge r-pub">Public</span></td><td>Filtered search — always scoped to approved + non-deleted</td></tr>
+      <tr><td><span class="method m-get">GET</span></td><td class="ep">/api/books/:id</td><td><span class="role-badge r-pub">Public</span></td><td>Single listing detail</td></tr>
+      <tr><td><span class="method m-post">POST</span></td><td class="ep">/api/books</td><td><span class="role-badge r-user">User</span></td><td>Create listing — Approval Mode Middleware applies here</td></tr>
+      <tr><td><span class="method m-put">PUT</span></td><td class="ep">/api/books/:id</td><td><span class="role-badge r-own">Owner</span></td><td>Edit own listing — approved → pending reset</td></tr>
+      <tr><td><span class="method m-delete">DELETE</span></td><td class="ep">/api/books/:id</td><td><span class="role-badge r-own">Owner</span></td><td>Soft delete own listing (isDeleted: true)</td></tr>
+    </table>
+
+    <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:.08em">ADMIN</div>
+    <table class="api-table">
+      <tr><th>Method</th><th>Endpoint</th><th>Access</th><th>Description</th></tr>
+      <tr><td><span class="method m-get">GET</span></td><td class="ep">/api/admin/stats</td><td><span class="role-badge r-admin">Admin+</span></td><td>Platform stats: users, listings, pending, approved</td></tr>
+      <tr><td><span class="method m-get">GET</span></td><td class="ep">/api/admin/books/pending</td><td><span class="role-badge r-admin">Admin+</span></td><td>All pending listings for moderation queue</td></tr>
+      <tr><td><span class="method m-put">PUT</span></td><td class="ep">/api/admin/books/:id/approve</td><td><span class="role-badge r-admin">Admin+</span></td><td>Approve listing → logged to AdminActivity</td></tr>
+      <tr><td><span class="method m-put">PUT</span></td><td class="ep">/api/admin/books/:id/reject</td><td><span class="role-badge r-admin">Admin+</span></td><td>Reject listing → logged to AdminActivity</td></tr>
+      <tr><td><span class="method m-delete">DELETE</span></td><td class="ep">/api/admin/books/:id</td><td><span class="role-badge r-admin">Admin+</span></td><td>Delete any listing → logged to AdminActivity</td></tr>
+      <tr><td><span class="method m-get">GET</span></td><td class="ep">/api/admin/users</td><td><span class="role-badge r-admin">Admin+</span></td><td>All users — firebaseUid never exposed</td></tr>
+      <tr><td><span class="method m-get">GET</span></td><td class="ep">/api/admin/users/:id</td><td><span class="role-badge r-admin">Admin+</span></td><td>Single user profile — read only</td></tr>
+    </table>
+
+    <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:.08em">SUPER ADMIN</div>
+    <table class="api-table">
+      <tr><th>Method</th><th>Endpoint</th><th>Access</th><th>Description</th></tr>
+      <tr><td><span class="method m-put">PUT</span></td><td class="ep">/api/super-admin/users/:id/promote</td><td><span class="role-badge r-super">Super Admin</span></td><td>Set role: 'admin' → logged</td></tr>
+      <tr><td><span class="method m-put">PUT</span></td><td class="ep">/api/super-admin/users/:id/demote</td><td><span class="role-badge r-super">Super Admin</span></td><td>Set role: 'user' → logged</td></tr>
+      <tr><td><span class="method m-put">PUT</span></td><td class="ep">/api/super-admin/users/:id/toggle-status</td><td><span class="role-badge r-super">Super Admin</span></td><td>Flip isActive + revoke Firebase tokens immediately</td></tr>
+      <tr><td><span class="method m-put">PUT</span></td><td class="ep">/api/super-admin/config/approval-mode</td><td><span class="role-badge r-super">Super Admin</span></td><td>Toggle manual ↔ automatic — logged with old+new value</td></tr>
+      <tr><td><span class="method m-get">GET</span></td><td class="ep">/api/super-admin/activity</td><td><span class="role-badge r-super">Super Admin</span></td><td>Paginated audit log — filter by action, actorType, actor, date</td></tr>
+      <tr><td><span class="method m-get">GET</span></td><td class="ep">/api/super-admin/stats</td><td><span class="role-badge r-super">Super Admin</span></td><td>Advanced metrics: role breakdown, bans, approval history</td></tr>
+    </table>
+  </div>
+
+  <!-- ══ TAB: DATA MODELS ════════════════════════════════════════════════ -->
+  <div class="flow-section" id="tab-models">
+
+    <p class="section-title">MongoDB Collections</p>
+
+    <div class="model-grid">
+
+      <div class="model-card">
+        <div class="model-header" style="color:#93C5FD">
+          <span style="font-size:16px">👤</span> users
+        </div>
+        <div class="model-body">
+          ${[
+            ['_id','ObjectId','PK'],
+            ['firebaseUid','String — Unique ⚑','Indexed, never returned in responses'],
+            ['email','String — Unique','From Google profile'],
+            ['displayName','String','From Google profile'],
+            ['role','Enum','user | admin | super_admin'],
+            ['isActive','Boolean','default: true — false = banned'],
+            ['createdAt','Date','Auto-set'],
+          ].map(([f,t,n])=>`
+          <div class="field-row" style="flex-wrap:wrap">
+            <span class="field-name">${f}</span>
+            <span class="field-type">${t}</span>
+            ${n?`<span class="field-note">${n}</span>`:''}
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="model-card">
+        <div class="model-header" style="color:#6EE7B7">
+          <span style="font-size:16px">📚</span> books
+        </div>
+        <div class="model-body">
+          ${[
+            ['_id','ObjectId','PK'],
+            ['bookName','String — required','Renamed from title (v1)'],
+            ['subject','String','Department/subject'],
+            ['price','Number — required','INR'],
+            ['condition','Enum','new | good | used'],
+            ['images','Array<String>','1–3 Cloudinary URLs'],
+            ['seller','ObjectId → User','Renamed from sellerId (v1)'],
+            ['sellerContact','String','Denormalized for display'],
+            ['status','Enum','pending | approved | rejected'],
+            ['isDeleted','Boolean','default: false — soft delete'],
+            ['createdAt','Date','Auto-set'],
+          ].map(([f,t,n])=>`
+          <div class="field-row" style="flex-wrap:wrap">
+            <span class="field-name">${f}</span>
+            <span class="field-type">${t}</span>
+            ${n?`<span class="field-note">${n}</span>`:''}
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="model-card">
+        <div class="model-header" style="color:#FCD34D">
+          <span style="font-size:16px">⚙️</span> systemconfig <span style="font-size:10px;color:var(--muted);font-weight:400">(singleton)</span>
+        </div>
+        <div class="model-body">
+          ${[
+            ['_id','ObjectId','Singleton — always same doc'],
+            ['approvalMode','Enum','manual | automatic — default: manual'],
+            ['updatedBy','ObjectId → User','Last Super Admin who changed this'],
+            ['updatedAt','Date','Timestamp of last change'],
+          ].map(([f,t,n])=>`
+          <div class="field-row" style="flex-wrap:wrap">
+            <span class="field-name">${f}</span>
+            <span class="field-type">${t}</span>
+            ${n?`<span class="field-note">${n}</span>`:''}
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="model-card">
+        <div class="model-header" style="color:#C4B5FD">
+          <span style="font-size:16px">🗒️</span> adminactivity
+        </div>
+        <div class="model-body">
+          ${[
+            ['_id','ObjectId','Auto-generated'],
+            ['actor','ObjectId → User | null','null when actorType is system'],
+            ['actorType','Enum','user | system'],
+            ['target','ObjectId','Affected User or Book'],
+            ['targetModel','Enum','User | Book'],
+            ['action','String','e.g. APPROVE_LISTING, PROMOTE_USER'],
+            ['metadata','Object','e.g. { oldRole, newRole }'],
+            ['timestamp','Date','Auto-set'],
+          ].map(([f,t,n])=>`
+          <div class="field-row" style="flex-wrap:wrap">
+            <span class="field-name">${f}</span>
+            <span class="field-type">${t}</span>
+            ${n?`<span class="field-note">${n}</span>`:''}
+          </div>`).join('')}
+        </div>
+      </div>
+
+    </div>
+
+    <p class="section-title">All Audit Log Action Types</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      ${['LISTING_CREATED','LISTING_APPROVED','LISTING_REJECTED','LISTING_DELETED',
+         'AUTO_APPROVE_LISTING','USER_PROMOTED','USER_DEMOTED','USER_BANNED',
+         'USER_UNBANNED','APPROVAL_MODE_CHANGED'].map(a=>`
+      <span style="font-family:var(--mono);font-size:10px;padding:4px 10px;border-radius:4px;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);color:#C4B5FD">${a}</span>`).join('')}
+    </div>
+  </div>
+
+  <!-- ══ TAB: BUILD PHASES ════════════════════════════════════════════════ -->
+  <div class="flow-section" id="tab-phases">
+
+    <p class="section-title">8-Phase Build Roadmap</p>
+
+    <div class="timeline">
+
+      <div class="tl-item">
+        <div class="tl-dot" style="border-color:var(--muted)"></div>
+        <div class="tl-phase">PHASE 0</div>
+        <div class="tl-title">Paper Alignment</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">No code. Resolve all conflicts on paper before touching the codebase.</div>
+        <div class="tl-items">
+          <span class="tl-chip">PRD + TRD consistent</span>
+          <span class="tl-chip">Migration plan written</span>
+          <span class="tl-chip">Zero field conflicts</span>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot" style="border-color:var(--cyan)"></div>
+        <div class="tl-phase">PHASE 1</div>
+        <div class="tl-title" style="color:var(--cyan)">Auth + RBAC Foundation</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">The security skeleton. Everything else depends on this being solid.</div>
+        <div class="tl-items">
+          <span class="tl-chip">Auth Middleware</span>
+          <span class="tl-chip">Role Middleware</span>
+          <span class="tl-chip">Google Sign-In</span>
+          <span class="tl-chip">isActive ban check</span>
+          <span class="tl-chip">Auto-create User on first login</span>
+        </div>
+        <div class="sec-box" style="margin-top:12px">
+          <div class="sec-box-title">Security Checkpoint</div>
+          <div class="sec-row"><div class="sec-icon">✓</div><div class="sec-text">User token cannot reach /api/admin or /api/super-admin</div></div>
+          <div class="sec-row"><div class="sec-icon">✓</div><div class="sec-text">isActive: false returns 403 even with a valid token</div></div>
+          <div class="sec-row"><div class="sec-icon">✓</div><div class="sec-text">Admin token cannot reach /api/super-admin</div></div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot" style="border-color:var(--green)"></div>
+        <div class="tl-phase">PHASE 2</div>
+        <div class="tl-title" style="color:var(--green)">DB Migration</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Clean the foundation before building on it.</div>
+        <div class="tl-items">
+          <span class="tl-chip">title → bookName</span>
+          <span class="tl-chip">sellerId → seller</span>
+          <span class="tl-chip">Add condition + subject</span>
+          <span class="tl-chip">Seed SystemConfig singleton</span>
+          <span class="tl-chip">Verify zero v1 field names remain</span>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot" style="border-color:#93C5FD)"></div>
+        <div class="tl-phase">PHASE 3</div>
+        <div class="tl-title" style="color:#93C5FD">Book CRUD + Approval Mode</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">User-facing book operations on the clean model.</div>
+        <div class="tl-items">
+          <span class="tl-chip">All book routes</span>
+          <span class="tl-chip">Approval Mode Middleware</span>
+          <span class="tl-chip">Input validation (Joi/Zod)</span>
+          <span class="tl-chip">Ownership check on PUT/DELETE</span>
+          <span class="tl-chip">Edit → pending reset</span>
+        </div>
+        <div class="sec-box" style="margin-top:12px">
+          <div class="sec-box-title">Security Checkpoint</div>
+          <div class="sec-row"><div class="sec-icon">✓</div><div class="sec-text">User cannot edit/delete another user's listing (403)</div></div>
+          <div class="sec-row"><div class="sec-icon">✓</div><div class="sec-text">Auto mode produces approved listing + system audit log entry</div></div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot" style="border-color:#C4B5FD"></div>
+        <div class="tl-phase">PHASE 4</div>
+        <div class="tl-title" style="color:#C4B5FD">Admin Layer</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Moderation tooling. Build on fully stable book layer.</div>
+        <div class="tl-items">
+          <span class="tl-chip">Admin dashboard routes</span>
+          <span class="tl-chip">Approve/Reject/Delete</span>
+          <span class="tl-chip">Stats endpoint</span>
+          <span class="tl-chip">User viewer (read-only)</span>
+          <span class="tl-chip">Audit logging on all actions</span>
+        </div>
+        <div class="sec-box" style="margin-top:12px">
+          <div class="sec-box-title">Security Checkpoint</div>
+          <div class="sec-row"><div class="sec-icon">✓</div><div class="sec-text">Admin cannot promote/demote/ban — those return 403</div></div>
+          <div class="sec-row"><div class="sec-icon">✓</div><div class="sec-text">User list response never contains firebaseUid</div></div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot" style="border-color:#FCD34D"></div>
+        <div class="tl-phase">PHASE 5</div>
+        <div class="tl-title" style="color:#FCD34D">Super Admin Layer</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Governance layer. Only build this after Phase 4 passes its checkpoint.</div>
+        <div class="tl-items">
+          <span class="tl-chip">Promote / Demote</span>
+          <span class="tl-chip">Ban + Firebase token revocation</span>
+          <span class="tl-chip">Approval mode toggle</span>
+          <span class="tl-chip">Audit log viewer</span>
+          <span class="tl-chip">Advanced stats</span>
+        </div>
+        <div class="sec-box" style="margin-top:12px">
+          <div class="sec-box-title">Security Checkpoint</div>
+          <div class="sec-row"><div class="sec-icon">✓</div><div class="sec-text">Banning user revokes Firebase token AND sets isActive: false</div></div>
+          <div class="sec-row"><div class="sec-icon">✓</div><div class="sec-text">Banned user's next request returns 403 mid-session</div></div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot" style="border-color:var(--green)"></div>
+        <div class="tl-phase">PHASE 6</div>
+        <div class="tl-title" style="color:var(--green)">Search &amp; Filters</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Purely additive. Zero conflict risk if Phases 1–5 are solid.</div>
+        <div class="tl-items">
+          <span class="tl-chip">GET /api/books/search</span>
+          <span class="tl-chip">q, condition, minPrice, maxPrice, subject, sort</span>
+          <span class="tl-chip">Compound MongoDB index</span>
+          <span class="tl-chip">Frontend filter UI</span>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot" style="border-color:var(--blue)"></div>
+        <div class="tl-phase">PHASE 7</div>
+        <div class="tl-title" style="color:#93C5FD">Frontend Dashboards + Launch</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Wire everything together. E2E test all three roles before deploy.</div>
+        <div class="tl-items">
+          <span class="tl-chip">User listing status UI</span>
+          <span class="tl-chip">Admin Dashboard</span>
+          <span class="tl-chip">Super Admin Panel</span>
+          <span class="tl-chip">E2E role testing</span>
+          <span class="tl-chip">Vercel + Render deploy</span>
+          <span class="tl-chip">Campus launch</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+function showTab(name) {
+  document.querySelectorAll('.flow-section').forEach(s => s.classList.remove('visible'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('visible');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

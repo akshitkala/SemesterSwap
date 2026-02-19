@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import { AuthProvider } from '@/context/AuthContext';
+import { Toaster } from 'react-hot-toast';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -30,13 +31,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} bg-gray-50 min-h-screen text-gray-900`}>
         <AuthProvider>
+          <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
           <Navbar />
-          <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-            {children}
-          </main>
+          {children}
         </AuthProvider>
       </body>
     </html>

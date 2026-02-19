@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { usePathname } from 'next/navigation';
 
 export default function Navbar() {
-    const { user, signInWithGoogle, logout, isAdmin, loading } = useAuth();
+    const { user, signInWithGoogle, logout, isAdmin, isSuperAdmin, loading } = useAuth();
     const pathname = usePathname();
 
     const handleLogin = async () => {
@@ -32,6 +32,16 @@ export default function Navbar() {
                             className="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-red-100 border border-red-100 transition-all"
                         >
                             Admin
+                        </Link>
+                    )}
+
+                    {/* Super Admin Link */}
+                    {!loading && isSuperAdmin && (
+                        <Link
+                            href="/super-admin/dashboard"
+                            className="bg-purple-50 text-purple-600 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-purple-100 border border-purple-100 transition-all"
+                        >
+                            Super Admin
                         </Link>
                     )}
 

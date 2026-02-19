@@ -1,0 +1,58 @@
+﻿≡ƒöî Connecting to MongoDB...
+Γ£à Connected.
+
+≡ƒôÜ Step 1: Migrating books collection...
+   Γ£à Books updated: 0 documents modified.
+
+ΓÜÖ∩╕Å  Step 2: Seeding SystemConfig singleton...
+   Γä╣∩╕Å  SystemConfig already exists ΓÇö skipping seed.
+   Current approvalMode: manual
+
+≡ƒöì Step 3: Running verification queries...
+
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+VERIFICATION RESULTS
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+Γ£à books with title field still present: null 
+Γ£à books with sellerId field still present: null 
+Γ£à books missing isDeleted field: null 
+Γ£à systemconfigs.countDocuments(): 1 
+
+≡ƒôä SystemConfig document:
+{
+  "_id": "699613291ab74032312b763a",
+  "approvalMode": "manual",
+  "updatedBy": null,
+  "updatedAt": "2026-02-18T19:29:45.240Z"
+}
+
+≡ƒôä Sample book document:
+{
+  "_id": "69940482ecc72a45cc95aa69",
+  "bookName": "maths",
+  "subject": "mth302",
+  "price": 100,
+  "condition": "Used",
+  "images": [
+    "https://res.cloudinary.com/dkoguefrb/image/upload/v1771308162/semester_swap/images-1771308159254.jpg"
+  ],
+  "sellerPhone": "8532999600",
+  "status": "approved",
+  "createdAt": "2026-02-17T06:02:42.665Z",
+  "slug": "maths-hk8x",
+  "__v": 0,
+  "isDeleted": false
+}
+
+≡ƒôï Sample book field checks:
+Γ£à Has bookName field
+Γ¥î Has seller field
+Γ£à No title field
+Γ£à No sellerId field
+
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+≡ƒÄë MIGRATION COMPLETE ΓÇö All verification checks passed.
+   Phase 2 exit criteria met. Ready for Phase 3.
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+≡ƒöî Disconnected from MongoDB.

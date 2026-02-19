@@ -1,21 +1,17 @@
 const multer = require('multer');
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const cloudinary = require('../config/cloudinary');
 
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'semester_swap',
-    format: async (req, file) => 'jpeg', // supports promises as well
-    public_id: (req, file) => file.fieldname + '-' + Date.now(),
-  },
-});
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/jpg') {
+  if (
+    file.mimetype === 'image/jpeg' ||
+    file.mimetype === 'image/png' ||
+    file.mimetype === 'image/jpg' ||
+    file.mimetype === 'image/webp'
+  ) {
     cb(null, true);
   } else {
-    cb(new Error('Unsupported file type. Only JPEG, PNG, and JPG are allowed.'), false);
+    cb(new Error('Unsupported file type. Only JPEG, PNG, JPG, and WebP are allowed.'), false);
   }
 };
 

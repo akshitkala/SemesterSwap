@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Book } from '@/lib/api';
 
-export default function BookCard({ book }: { book: Book }) {
+export default function BookCard({ book, priority = false }: { book: Book; priority?: boolean }) {
     return (
         <Link
             href={`/book/${book.slug}`}
@@ -14,6 +14,7 @@ export default function BookCard({ book }: { book: Book }) {
                         src={book.images[0].replace('/upload/', '/upload/f_auto,q_auto,w_500/')}
                         alt={book.bookName}
                         fill
+                        priority={priority}
                         className="object-cover group-hover:scale-105 transition-transform duration-500"
                         sizes="(max-width: 768px) 50vw, 33vw"
                     />

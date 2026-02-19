@@ -5,7 +5,6 @@ const bookSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please add a book name'],
     trim: true,
-    index: true, // Index for search performance
   },
   subject: {
     type: String,
@@ -20,7 +19,7 @@ const bookSchema = new mongoose.Schema({
   condition: {
     type: String,
     required: [true, 'Please select condition'],
-    enum: ['New', 'Good', 'Used'],
+    enum: ['new', 'good', 'used'],  // V2: lowercase to match TRD spec
   },
   images: {
     type: [String],
@@ -35,8 +34,10 @@ const bookSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Seller phone number is required'],
   },
-  sellerId: {
-    type: String,
+  // V2: seller is now a proper ObjectId ref to User (was sellerId: String in V1)
+  seller: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true,
     index: true,
   },
@@ -50,8 +51,12 @@ const bookSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'approved'],
+    enum: ['pending', 'approved', 'rejected'],
     default: 'pending',
+  },
+  isDeleted: {
+    type: Boolean,
+    default: false,
   },
   createdAt: {
     type: Date,
@@ -83,4 +88,18 @@ bookSchema.pre('save', async function (next) {
   next();
 });
 
+// ── Phase 6 compound indexes for search & filter performance ──────────────────
+// Supports: sort=newest (status+isDeleted covered, then sort by createdAt)
+bookSchema.index({ status: 1, isDeleted: 1, createdAt: -1 });
+// Supports: sort=price_asc / price_desc + minPrice/maxPrice filter
+bookSchema.index({ status: 1, isDeleted: 1, price: 1 });
+// Supports: condition filter
+bookSchema.index({ status: 1, isDeleted: 1, condition: 1 });
+
+// Compound index for the main listing query (approved + not deleted)
+bookSchema.index({ status: 1, isDeleted: 1 });
+// Compound index for the sorted listing on the home page
+bookSchema.index({ createdAt: -1, status: 1, isDeleted: 1 });
+
 module.exports = mongoose.model('Book', bookSchema);
+

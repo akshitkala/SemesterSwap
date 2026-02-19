@@ -3,13 +3,14 @@ import SearchBar from '@/components/SearchBar';
 import { fetchBooks } from '@/lib/api';
 import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
+// ISR: serve from cache, revalidate at most once per minute
+export const revalidate = 60;
 
 export default async function Home() {
   const books = await fetchBooks();
 
   return (
-    <>
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       {/* Hero Section */}
       <section className="bg-emerald-600 text-white py-20 px-6 text-center shadow-lg rounded-3xl mb-12">
         <div className="max-w-3xl mx-auto">
@@ -28,8 +29,8 @@ export default async function Home() {
       <div className="space-y-8">
         {books.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8">
-            {books.map((book) => (
-              <BookCard key={book._id} book={book} />
+            {books.map((book, index) => (
+              <BookCard key={book._id} book={book} priority={index < 4} />
             ))}
           </div>
         ) : (
@@ -51,6 +52,6 @@ export default async function Home() {
           </div>
         )}
       </div>
-    </>
+    </main>
   );
 }
