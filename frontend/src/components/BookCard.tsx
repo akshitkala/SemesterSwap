@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Book } from '@/lib/api';
+import { timeAgo } from '@/lib/utils';
 
 export default function BookCard({ book, priority = false }: { book: Book; priority?: boolean }) {
     return (
@@ -33,9 +34,12 @@ export default function BookCard({ book, priority = false }: { book: Book; prior
                     {book.bookName}
                 </h3>
                 <p className="text-sm text-gray-500 truncate mb-3">{book.subject}</p>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-3">
                     <p className="font-bold text-gray-900 text-lg">₹{book.price}</p>
-                    <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full font-medium">View</span>
+                    <span className="text-xs text-gray-400 font-medium">{timeAgo(book.createdAt)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                    <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full font-medium">View Details</span>
                 </div>
             </div>
         </Link>

@@ -12,11 +12,11 @@ const apiLimiter = rateLimit({
   },
 });
 
-// Auth Limiter — 10 req / 15 min (M5: tighter to throttle brute-force login attempts)
+// Auth Limiter — 100 req / 15 min (Relaxed to prevent 429 loops on frontend reloads)
 // Applied specifically to /api/auth in app.js on top of the global limiter
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: {

@@ -17,11 +17,13 @@ export default function AdminLayout({
         if (!loading) {
             if (!user) {
                 router.push('/');
+            } else if (role === 'super_admin') {
+                router.push('/super-admin'); // Strict separation: Super Admin -> Super Admin Dashboard
             } else if (!isAdmin) {
                 router.push('/');
             }
         }
-    }, [user, loading, isAdmin, router]);
+    }, [user, loading, isAdmin, role, router]);
 
     if (loading) {
         return (

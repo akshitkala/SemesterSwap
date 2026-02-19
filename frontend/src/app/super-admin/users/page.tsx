@@ -91,7 +91,13 @@ export default function UsersPage() {
                                             )}
                                         </div>
                                         <div className="ml-4">
-                                            <div className="text-sm font-medium text-gray-900">{user.displayName || 'Unnamed User'}</div>
+                                            <div className="text-sm font-medium text-gray-900 hover:text-indigo-600 hover:underline cursor-pointer">
+                                                {/* Start Profile Link */}
+                                                <a href={`/profile/${user._id}`} target="_blank" rel="noopener noreferrer">
+                                                    {user.displayName || 'Unnamed User'}
+                                                </a>
+                                                {/* End Profile Link */}
+                                            </div>
                                         </div>
                                     </div>
                                 </td>

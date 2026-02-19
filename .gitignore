@@ -93,6 +93,13 @@ backend/.env.local
 # documents/
 
 # Ignore test folders if not needed in repo
-backend/tests/
-backend/__tests__/
+# backend/tests/
+# backend/__tests__/
 backend/coverage/
+
+# Debug output files (do not commit)
+backend/*.txt
+backend/*.log
+backend/migration_output.txt
+*.log
+

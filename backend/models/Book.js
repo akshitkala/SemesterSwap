@@ -18,17 +18,35 @@ const bookSchema = new mongoose.Schema({
   },
   condition: {
     type: String,
-    required: [true, 'Please select condition'],
-    enum: ['new', 'good', 'used'],  // V2: lowercase to match TRD spec
+    required: [true, 'Please select the condition of the book'],
+    enum: ['new', 'good', 'used'],
+  },
+  conditionDescription: {
+    type: String,
+    maxLength: [500, 'Condition description cannot exceed 500 characters'],
   },
   images: {
     type: [String],
-    validate: {
-      validator: function (v) {
-        return v.length <= 3;
+    validate: [
+      {
+        validator: function (v) {
+          return v.length <= 3;
+        },
+        message: 'You can upload a maximum of 3 images',
       },
-      message: 'You can upload a maximum of 3 images',
-    },
+      {
+        validator: function (v) {
+          return v.length >= 1;
+        },
+        message: 'You must upload at least one image',
+      },
+      {
+        validator: function (v) {
+          return Array.isArray(v);
+        },
+        message: 'Images must be an array',
+      }
+    ],
   },
   sellerPhone: {
     type: String,

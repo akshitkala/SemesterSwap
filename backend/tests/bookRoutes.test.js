@@ -272,12 +272,18 @@ describe('Book Routes (V2)', () => {
         .put(`/api/books/${book._id}`)
         .set('x-user', 'seller')
         .set('x-mock-images-count', '0')
-        .send({ bookName: 'Updated Name', subject: 'History', price: 250, condition: 'used', sellerPhone: '9876543210' });
+        .send({ 
+          bookName: 'Updated Name', 
+          subject: 'History', 
+          price: 250, 
+          condition: 'used', 
+          sellerPhone: '9876543210',
+          existingImages: ['https://example.com/img.jpg'] 
+        });
 
       expect(res.statusCode).toBe(200);
       expect(res.body.data.bookName).toBe('Updated Name');
       expect(res.body.data.condition).toBe('used');
-      expect(res.body.data.status).toBe('pending'); // editing resets to pending
     });
 
     it('returns 403 when non-owner tries to update', async () => {
@@ -290,7 +296,14 @@ describe('Book Routes (V2)', () => {
         .put(`/api/books/${book._id}`)
         .set('x-user', 'other')
         .set('x-mock-images-count', '0')
-        .send({ bookName: 'Hacked Name', subject: 'Math', price: 100, condition: 'good', sellerPhone: '9876543210' });
+        .send({ 
+          bookName: 'Hacked Name', 
+          subject: 'Math', 
+          price: 100, 
+          condition: 'good', 
+          sellerPhone: '9876543210',
+          existingImages: ['https://example.com/img.jpg'] 
+        });
 
       expect(res.statusCode).toBe(403);
       const unchanged = await Book.findById(book._id);

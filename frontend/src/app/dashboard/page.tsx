@@ -66,80 +66,109 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-8">
-            <div className="flex items-center justify-between mb-8">
+        <div className="max-w-4xl mx-auto">
+            {/* Dashboard Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold">My Listings</h1>
-                    <p className="text-sm text-gray-500">Welcome, {user.displayName || user.email}</p>
+                    <h1 className="text-2xl font-bold text-gray-900">My Listings</h1>
+                    <p className="text-sm text-gray-500 mt-1">
+                        Manage your books and track their status.
+                    </p>
                 </div>
-                <button
-                    onClick={() => { logout(); router.push('/'); }}
-                    className="text-sm text-red-500 hover:text-red-700 border border-red-100 hover:bg-red-50 px-4 py-2 rounded-lg transition-colors"
+                <Link
+                    href="/sell"
+                    className="inline-flex items-center justify-center gap-2 bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-emerald-700 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
                 >
-                    Logout
-                </button>
+                    <span className="text-lg">+</span> Sell a Book
+                </Link>
             </div>
 
             {loading ? (
-                <div className="text-center py-20 text-gray-400">Loading listings...</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="h-40 bg-gray-100 rounded-xl animate-pulse"></div>
+                    ))}
+                </div>
             ) : books.length === 0 ? (
-                <div className="text-center py-20 bg-gray-50 rounded-2xl">
-                    <p className="text-gray-500 mb-4">You haven't listed any books yet.</p>
-                    <Link href="/sell" className="inline-block bg-emerald-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-emerald-700 hover:shadow-md transition-all">
-                        List a Book
+                <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-300">
+                    <div className="text-4xl mb-4">📚</div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No listings yet</h3>
+                    <p className="text-gray-500 mb-6 max-w-sm mx-auto">
+                        You haven't listed any books for sale. Start turning your old books into cash!
+                    </p>
+                    <Link
+                        href="/sell"
+                        className="text-emerald-600 font-medium hover:text-emerald-700 hover:underline underline-offset-4"
+                    >
+                        Create your first listing &rarr;
                     </Link>
                 </div>
             ) : (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
                     {books.map((book) => (
-                        <div key={book._id} className="bg-white p-4 rounded-xl border border-gray-100 flex items-center gap-4 shadow-sm hover:shadow-md transition-all">
-                            <div className="h-20 w-16 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden relative">
+                        <div key={book._id} className="group bg-white p-4 rounded-xl border border-gray-100 flex items-start sm:items-center gap-4 hover:shadow-md hover:border-emerald-100 transition-all duration-200">
+                            {/* Image */}
+                            <div className="h-24 w-20 bg-gray-50 rounded-lg flex-shrink-0 overflow-hidden relative border border-gray-100">
                                 {book.images[0] ? (
-                                    <img src={book.images[0]} alt={book.bookName} className="object-cover h-full w-full" />
+                                    <img
+                                        src={book.images[0]}
+                                        alt={book.bookName}
+                                        className="object-cover h-full w-full group-hover:scale-105 transition-transform duration-500"
+                                    />
                                 ) : (
                                     <div className="flex items-center justify-center h-full text-2xl">📚</div>
                                 )}
                             </div>
 
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <h3 className="font-semibold text-gray-900 truncate">{book.bookName}</h3>
-                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${book.status === 'approved' ? 'bg-emerald-100 text-emerald-800' :
-                                        book.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                            'bg-yellow-100 text-yellow-800'
+                            {/* Content */}
+                            <div className="flex-1 min-w-0 py-1">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
+                                    <h3 className="font-semibold text-gray-900 truncate text-lg">{book.bookName}</h3>
+                                    <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold w-fit ${book.status === 'approved' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100' :
+                                        book.status === 'rejected' ? 'bg-red-50 text-red-700 ring-1 ring-red-100' :
+                                            'bg-yellow-50 text-yellow-700 ring-1 ring-yellow-100'
                                         }`}>
                                         {book.status?.toUpperCase() || 'PENDING'}
                                     </span>
                                 </div>
-                                <div className="flex items-center text-sm text-gray-500 gap-3">
-                                    <span>₹{book.price}</span>
-                                    <span>• {book.condition}</span>
-                                </div>
-                            </div>
+                                <p className="text-sm text-gray-500 mb-3 line-clamp-1">{book.subject}</p>
 
-                            <div className="flex items-center gap-2">
-                                <Link
-                                    href={`/dashboard/edit/${book._id}`}
-                                    className="text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg transition-all"
-                                    title="Edit Listing"
-                                >
-                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                    </svg>
-                                </Link>
-                                <button
-                                    onClick={() => handleDelete(book._id)}
-                                    className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-all"
-                                    title="Delete Listing"
-                                >
-                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                </button>
+                                <div className="flex items-center justify-between mt-2">
+                                    <div className="flex items-center gap-3 text-sm">
+                                        <span className="font-bold text-gray-900">₹{book.price}</span>
+                                        <span className="text-gray-300">|</span>
+                                        <span className="text-gray-500 capitalize">{book.condition}</span>
+                                    </div>
+
+                                    {/* Actions (Desktop) */}
+                                    <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                        <Link
+                                            href={`/dashboard/edit/${book._id}`}
+                                            className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                            title="Edit"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                                        </Link>
+                                        <button
+                                            onClick={() => handleDelete(book._id)}
+                                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                            title="Delete"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     ))}
                 </div>
+            )}
+
+            {/* Disclaimer Footer */}
+            {!loading && books.length > 0 && (
+                <p className="text-center text-xs text-gray-400 mt-8">
+                    Listings are automatically removed 30 days after approval if not marked as sold.
+                </p>
             )}
         </div>
     );

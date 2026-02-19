@@ -39,9 +39,9 @@ export default async function BookDetailPage({ params }: Props) {
 
     // Condition Badge Colors
     const conditionColors = {
-        New: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-        Good: 'bg-blue-100 text-blue-800 border-blue-200',
-        Used: 'bg-amber-100 text-amber-800 border-amber-200',
+        new: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+        good: 'bg-blue-100 text-blue-800 border-blue-200',
+        used: 'bg-amber-100 text-amber-800 border-amber-200',
     };
 
     return (
@@ -71,13 +71,20 @@ export default async function BookDetailPage({ params }: Props) {
                     {/* Right Column: Book Details */}
                     <div className="space-y-8">
                         <div>
-                            <div className="flex items-center gap-3 mb-4">
-                                <span className={`px-3 py-1 rounded-full text-sm font-semibold border ${conditionColors[book.condition] || 'bg-gray-100 text-gray-800'}`}>
-                                    {book.condition} Condition
-                                </span>
-                                <span className="text-sm text-gray-400">
-                                    • Posted {new Date(book.createdAt).toLocaleDateString()}
-                                </span>
+                            <div className="flex flex-col gap-2 mb-4">
+                                <div className="flex items-center gap-3">
+                                    <span className={`px-3 py-1 rounded-full text-sm font-semibold border ${conditionColors[book.condition] || 'bg-gray-100 text-gray-800'}`}>
+                                        {book.condition} Condition
+                                    </span>
+                                    <span className="text-sm text-gray-400">
+                                        • Posted {new Date(book.createdAt).toLocaleDateString()}
+                                    </span>
+                                </div>
+                                {book.conditionDescription && (
+                                    <p className="text-sm text-gray-600 italic bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                        "{book.conditionDescription}"
+                                    </p>
+                                )}
                             </div>
 
                             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-4">

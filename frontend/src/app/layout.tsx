@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 import { AuthProvider } from '@/context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 
@@ -36,7 +37,10 @@ export default function RootLayout({
         <AuthProvider>
           <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
           <Navbar />
-          {children}
+          <div className="flex-grow">
+            {children}
+          </div>
+          <Footer />
         </AuthProvider>
       </body>
     </html>

@@ -48,6 +48,7 @@ app.use('/api/auth',        require('./routes/authRoutes'));
 app.use('/api/books',       require('./routes/bookRoutes'));
 app.use('/api/admin',       require('./routes/adminRoutes'));
 app.use('/api/super-admin', require('./routes/superAdminRoutes'));
+app.use('/api/users',       require('./routes/userRoutes'));
 
 app.get('/', (req, res) => {
   res.send('API is running...');

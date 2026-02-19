@@ -17,6 +17,7 @@ export default function SellPage() {
         subject: '',
         price: '',
         condition: 'Used',
+        conditionDescription: '',
         sellerPhone: '',
     });
 
@@ -67,6 +68,12 @@ export default function SellPage() {
 
         if (!user) return;
 
+        if (images.length === 0) {
+            setError('Please upload at least one photo of your book.');
+            setLoading(false);
+            return;
+        }
+
         try {
             const token = await user.getIdToken();
             const data = new FormData();
@@ -74,6 +81,7 @@ export default function SellPage() {
             data.append('subject', formData.subject);
             data.append('price', formData.price);
             data.append('condition', formData.condition);
+            data.append('conditionDescription', formData.conditionDescription);
             data.append('sellerPhone', formData.sellerPhone);
 
             images.forEach((file) => {
@@ -151,9 +159,9 @@ export default function SellPage() {
                                         onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
                                         className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-gray-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all appearance-none cursor-pointer"
                                     >
-                                        <option value="New">Like New</option>
-                                        <option value="Good">Good</option>
-                                        <option value="Used">Heavily Used</option>
+                                        <option value="New">New (Like New)</option>
+                                        <option value="Good">Good (Minimal Wear)</option>
+                                        <option value="Used">Used (Visible Wear)</option>
                                     </select>
                                     <div className="absolute right-4 top-3.5 pointer-events-none">
                                         <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,6 +170,24 @@ export default function SellPage() {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Condition Description */}
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Condition Description <span className="text-gray-400 font-normal">(Optional)</span>
+                            </label>
+                            <textarea
+                                value={formData.conditionDescription}
+                                onChange={(e) => setFormData({ ...formData, conditionDescription: e.target.value })}
+                                placeholder="Describe any defects, highlighting, or missing pages (max 500 chars)..."
+                                rows={3}
+                                maxLength={500}
+                                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-gray-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none placeholder-gray-400"
+                            />
+                            <p className="text-xs text-right text-gray-400 mt-1">
+                                {formData.conditionDescription.length}/500
+                            </p>
                         </div>
 
                         {/* Phone Number */}

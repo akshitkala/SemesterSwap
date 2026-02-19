@@ -12,7 +12,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     useEffect(() => {
         if (!loading) {
             if (!user) {
-                router.push('/login');
+                router.push('/');
             } else if (!isSuperAdmin) {
                 router.push('/');
             }

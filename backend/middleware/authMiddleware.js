@@ -88,6 +88,8 @@ const verifyToken = async (req, res, next) => {
     req.user.role = user.role;
     req.user._id = user._id; // MongoDB ID
 
+    console.log(`[AuthMiddleware] User ${user.email} verified as ${user.role}`);
+
     next();
   } catch (error) {
     next(error);

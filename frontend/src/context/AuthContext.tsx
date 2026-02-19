@@ -34,16 +34,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
-                // ── Fast path: serve role from cache instantly ──────────────
+                // ── Strategy: Stale-While-Revalidate ────────────────────────
+                // 1. If we have a cached role, use it immediately for instant UI
                 const cacheKey = `role_${firebaseUser.uid}`;
                 const cachedRole = sessionStorage.getItem(cacheKey);
+
                 if (cachedRole) {
                     setRole(cachedRole);
                     setUser(firebaseUser);
-                    setLoading(false); // unblock UI immediately
+                    setLoading(false); // Unblock UI immediately with cached data
                 }
 
-                // ── Background refresh: always fetch fresh role ─────────────
+                // 2. ALWAYS fetch the latest role from backend to ensure sync
                 try {
                     const token = await firebaseUser.getIdToken();
                     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -52,16 +54,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                             'Authorization': `Bearer ${token}`
                         }
                     });
+
                     if (response.ok) {
                         const data = await response.json();
                         const freshRole = data.data.role;
-                        sessionStorage.setItem(cacheKey, freshRole); // update cache
-                        setRole(freshRole);
+
+                        // Only update state/cache if the role has actually changed
+                        if (freshRole !== cachedRole) {
+                            console.log(`[AuthContext] Role updated from ${cachedRole} to ${freshRole}`);
+                            sessionStorage.setItem(cacheKey, freshRole);
+                            setRole(freshRole);
+                        }
                     } else {
+                        // If backend fails but we have cache, keep cache. If no cache, fallback to 'user'.
                         if (response.status !== 401) {
                             console.error('[AuthContext] Failed to fetch user role', response.status);
                         }
-                        if (!cachedRole) setRole('user'); // only fallback if no cache
+                        if (!cachedRole) setRole('user');
                     }
                 } catch (error) {
                     console.error('[AuthContext] Error fetching user role:', error);
@@ -69,11 +78,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 }
 
                 setUser(firebaseUser);
-                if (!cachedRole) setLoading(false); // loading was already set above if cached
+                setLoading(false); // Ensure loading is false
             } else {
                 setUser(null);
                 setRole(null);
                 setLoading(false);
+                sessionStorage.clear(); // Clear all role keys
             }
         });
         return () => unsubscribe();
@@ -93,6 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             await signOut(auth);
             setRole(null);
+            sessionStorage.clear();
         } catch (error) {
             console.error("Error signing out", error);
         }

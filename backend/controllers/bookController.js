@@ -7,7 +7,7 @@ const cloudinary = require('../config/cloudinary');
 // @access  Private
 const createBook = async (req, res, next) => {
   try {
-    const { bookName, subject, price, condition, sellerPhone } = req.body;
+    const { bookName, subject, price, condition, conditionDescription, sellerPhone } = req.body;
 
     // V2: seller is req.user._id (MongoDB ObjectId), not Firebase uid string
     const actorId = req.user._id;
@@ -25,6 +25,11 @@ const createBook = async (req, res, next) => {
 
     // Handle file uploads
     let images = [];
+    if (!req.files || req.files.length === 0) {
+        res.status(400);
+        throw new Error('Please upload at least one image of the book');
+    }
+
     if (req.files && req.files.length > 0) {
       if (req.files.length > 3) {
         res.status(400);
@@ -63,6 +68,7 @@ const createBook = async (req, res, next) => {
       subject,
       price,
       condition: normalizedCondition,
+      conditionDescription,
       images,
       sellerPhone,
       seller: actorId,        // V2: ObjectId ref to User
@@ -310,14 +316,15 @@ const updateBook = async (req, res, next) => {
     if (subject)   book.subject  = subject;
     if (price)     book.price    = price;
     // Normalize condition to lowercase
-    if (condition) book.condition = condition.toLowerCase();
-    if (sellerPhone) {
+    if (req.body.condition) book.condition = req.body.condition.toLowerCase();
+    if (req.body.conditionDescription) book.conditionDescription = req.body.conditionDescription;
+    if (req.body.sellerPhone) {
       const phoneRegex = /^\d{10,15}$/;
-      if (!phoneRegex.test(sellerPhone)) {
+      if (!phoneRegex.test(req.body.sellerPhone)) {
         res.status(400);
         throw new Error('Please provide a valid phone number (10-15 digits)');
       }
-      book.sellerPhone = sellerPhone;
+      book.sellerPhone = req.body.sellerPhone;
     }
 
     // Handle images
@@ -355,6 +362,10 @@ const updateBook = async (req, res, next) => {
     if (finalImages.length > 3) {
       res.status(400);
       throw new Error('You can have a maximum of 3 images total');
+    }
+    if (finalImages.length === 0) {
+        res.status(400);
+        throw new Error('You must have at least one image of the book');
     }
 
     book.images = finalImages;

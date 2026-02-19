@@ -1,0 +1,72 @@
+[
+  {
+    "category": "Functional",
+    "description": "Create Book with Image",
+    "status": "PASS",
+    "details": "Book created successfully",
+    "timestamp": "2026-02-19T13:13:19.025Z"
+  },
+  {
+    "category": "Functional",
+    "description": "Enforce Mandatory Image",
+    "status": "PASS",
+    "details": "Rejected no-image upload",
+    "timestamp": "2026-02-19T13:13:19.040Z"
+  },
+  {
+    "category": "Security",
+    "description": "Normal User access SuperAdmin Route",
+    "status": "PASS",
+    "details": "Access Forbidden 403",
+    "timestamp": "2026-02-19T13:13:19.056Z"
+  },
+  {
+    "category": "Security",
+    "description": "Admin access SuperAdmin Route",
+    "status": "PASS",
+    "details": "Access Forbidden 403",
+    "timestamp": "2026-02-19T13:13:19.065Z"
+  },
+  {
+    "category": "Functional",
+    "description": "SuperAdmin access SuperAdmin Route",
+    "status": "PASS",
+    "details": "Access Granted",
+    "timestamp": "2026-02-19T13:13:19.084Z"
+  },
+  {
+    "category": "Security",
+    "description": "IDOR - Delete Others Book",
+    "status": "PASS",
+    "details": "Prevented unauthorized deletion",
+    "timestamp": "2026-02-19T13:13:19.094Z"
+  },
+  {
+    "category": "Logic",
+    "description": "Approve Listing",
+    "status": "PASS",
+    "details": "Listing approved",
+    "timestamp": "2026-02-19T13:13:19.115Z"
+  },
+  {
+    "category": "Data Consistency",
+    "description": "Book Status Update",
+    "status": "PASS",
+    "details": "Status is approved",
+    "timestamp": "2026-02-19T13:13:19.118Z"
+  },
+  {
+    "category": "Functional",
+    "description": "View User Profile",
+    "status": "PASS",
+    "details": "Profile accessible",
+    "timestamp": "2026-02-19T13:13:19.131Z"
+  },
+  {
+    "category": "Privacy",
+    "description": "Profile Email Exposure",
+    "status": "PASS",
+    "details": "Email hidden in profile",
+    "timestamp": "2026-02-19T13:13:19.131Z"
+  }
+]
